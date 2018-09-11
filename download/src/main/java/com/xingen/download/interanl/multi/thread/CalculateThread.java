@@ -1,5 +1,6 @@
 package com.xingen.download.interanl.multi.thread;
 
+import com.xingen.download.common.net.NetWorkUtils;
 import com.xingen.download.common.utils.FileUtils;
 import com.xingen.download.common.utils.LOG;
 import com.xingen.download.common.utils.StringUtils;
@@ -12,7 +13,6 @@ import com.xingen.download.interanl.multi.task.MultiDownLoadTask;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,12 +69,13 @@ public class CalculateThread extends BaseThread {
                 if (Thread.interrupted()) {
                     return;
                 }
-                HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(downLoadTask.getDownloadUrl()).openConnection();
+                HttpURLConnection httpURLConnection = NetWorkUtils.createConnection(downLoadTask.getDownloadUrl());
                 if (Thread.interrupted()) {
                     return;
                 }
                 httpURLConnection.connect();
                 if (downLoadTask.isCancel()){
+                    httpURLConnection.disconnect();
                     return  ;
                 }
                 if (httpURLConnection.getResponseCode() == 200) {
@@ -115,6 +116,7 @@ public class CalculateThread extends BaseThread {
                     state = CommonTaskConstants.task_calculate_failure;
                     this.downLoadTask.deliverResult(state);
                 }
+                httpURLConnection.getInputStream().close();
                 httpURLConnection.disconnect();
             }
         } catch (Exception e) {

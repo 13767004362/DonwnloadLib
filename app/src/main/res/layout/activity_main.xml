@@ -21,5 +21,9 @@
         android:layout_height="wrap_content"
         android:text="断点续传下载" />
 
-
+    <Button
+        android:id="@+id/main_delete_again_multi_download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="删除下载" />
 </LinearLayout>

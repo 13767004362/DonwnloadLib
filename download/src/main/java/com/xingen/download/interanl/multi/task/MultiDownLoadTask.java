@@ -1,7 +1,5 @@
 package com.xingen.download.interanl.multi.task;
 
-import android.util.Log;
-
 import com.xingen.download.common.utils.LOG;
 import com.xingen.download.common.utils.StringUtils;
 import com.xingen.download.interanl.AppExecute;
@@ -264,7 +262,7 @@ public class MultiDownLoadTask {
             getDatabaseClient().updateDownloadTask(getDownloadTaskBean(), StringUtils.createTaskQuerySQL(), new String[]{getDownloadUrl()});
             //删除对应的item记录
             getDatabaseClient().deleteDownloadItem(StringUtils.createTaskItemQuerySQL(), new String[]{getDownloadUrl()});
-            Log.i(TAG, " MultiDownloadThread 写入磁盘操作完成");
+            LOG.i(TAG, " MultiDownloadThread 写入磁盘操作完成");
             releaseResource();
         }
     }

@@ -1,17 +1,18 @@
 package com.xingen.download.interanl.multi.thread;
 
+import com.xingen.download.common.net.NetWorkUtils;
 import com.xingen.download.common.utils.LOG;
 import com.xingen.download.common.utils.StringUtils;
 import com.xingen.download.interanl.multi.constants.CommonTaskConstants;
 import com.xingen.download.interanl.multi.db.bean.DownloadItemBean;
 import com.xingen.download.interanl.multi.task.MultiDownLoadTask;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 
 /**
@@ -50,10 +51,12 @@ public class MultiDownloadThread extends BaseThread {
                 long startIndex = downloadItem.getCurrentIndex();
                 long endIndex = (startIndex + CommonTaskConstants.EVERY_REQUEST_MAX_LENGTH > downloadItem.getEndIndex()) ?
                         downloadItem.getEndIndex() : startIndex + CommonTaskConstants.EVERY_REQUEST_MAX_LENGTH;
-                HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(downLoadTask.getDownloadUrl()).openConnection();
+                HttpURLConnection httpURLConnection = NetWorkUtils.createConnection(downLoadTask.getDownloadUrl());
                 httpURLConnection.addRequestProperty(CommonTaskConstants.HEADER_NAME_RANGE, StringUtils.createRangeHeader(startIndex, endIndex));
                 httpURLConnection.connect();
                 if (downLoadTask.isCancel()) {
+                    httpURLConnection.getInputStream().close();
+                    httpURLConnection.disconnect();
                     return;
                 }
                 //206状态码是部分数据的标识
@@ -61,12 +64,13 @@ public class MultiDownloadThread extends BaseThread {
                     LOG.i(TAG, " MultiDownloadThread 网络执行，但失败响应");
                     state = CommonTaskConstants.task_download_failure;
                     downLoadTask.deliverResult(state);
+                    httpURLConnection.getInputStream().close();
                     httpURLConnection.disconnect();
                 } else {
                     //当前一个下载模块的长度，不是总长度
                     long fileLength = httpURLConnection.getContentLength();
                     LOG.i(TAG, " MultiDownloadThread 网络执行完，开始写入磁盘中" + " 网络流的长度是: " + fileLength);
-                    InputStream inputStream = httpURLConnection.getInputStream();
+                    InputStream inputStream = new BufferedInputStream(httpURLConnection.getInputStream());
                     //移动到指定位置
                     randomAccessFile.seek(downloadItem.getCurrentIndex());
                     byte[] buffer = new byte[4096];
